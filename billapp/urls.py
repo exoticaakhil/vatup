@@ -153,6 +153,11 @@ urlpatterns = [
     path('stock_report/',views.stock_report,name='stock_report'),
     path('sharestockitemToEmail/',views.sharestockitemToEmail,name='sharestockitemToEmail'),
     path('item_stock_report/<int:id>',views.itemStockReport, name='itemStockReport'),
+
+      path('custdata1',views.custdata1,name="custdata1"),
+      path('save_party3',views.save_party3,name="save_party3"),
+
+
         
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 

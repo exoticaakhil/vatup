@@ -2286,10 +2286,10 @@ def createdebitnote(request):
         cmp = request.user.employee.company
 
     parties = Party.objects.filter(company=cmp)
-    bills = PurchaseBill.objects.filter(company=cmp)
+   
     unit = Unit.objects.filter(company=cmp)
     items = Item.objects.filter(company=cmp)
-    print("Bills:", bills)
+ 
 
     # Determine the next return number
     last_debit_note = DebitNote.objects.filter(company=cmp).order_by('-returnno').first()
@@ -2301,7 +2301,7 @@ def createdebitnote(request):
     context = {
         'usr': request.user,
         'parties': parties,
-        'bills': bills,
+        
         'items': items,
         'units': unit,
         'company_id': cmp.id,  # Pass company_id to the template
@@ -2527,13 +2527,13 @@ def save_debit_note(request):
     company_id = cmp.id  # Assuming company id is required
 
     if request.method == 'POST':
-        party_id = request.POST.get('party')
-        return_no = request.POST.get('return_no')
-        current_date = request.POST.get('current-date1')
+        party_id = request.POST.get('customername')
+        return_no = request.POST.get('bill_no')
+        current_date = request.POST.get('billdate')
         subtotal = request.POST.get('subtotal')
-        tax_amount = request.POST.get('taxAmount')
-        adjustment = request.POST.get('adjustment')
-        grand_total = request.POST.get('grandTotal')
+        tax_amount = request.POST.get('taxamount')
+        adjustment = request.POST.get('adj')
+        grand_total = request.POST.get('grandtotal')
 
         selected_party = Party.objects.get(id=party_id)
 
@@ -2555,10 +2555,10 @@ def save_debit_note(request):
             action='C'
         )
 
-        items = request.POST.getlist("selected_item[]")
-        quantities = request.POST.getlist("item_quantity[]")
-        discounts = request.POST.getlist("item_discount[]")
-        total_amounts = request.POST.getlist("item_total_amount[]")
+        items = request.POST.getlist("product[]")
+        quantities = request.POST.getlist("qty[]")
+        discounts = request.POST.getlist("discount[]")
+        total_amounts = request.POST.getlist("total[]")
 
         for item, qty, discount, total_amount in zip(items, quantities, discounts, total_amounts):
             itm = Item.objects.get(id=item)
@@ -4096,3 +4096,87 @@ def sharestockitemToEmail(request):
         return redirect('stock_report')  
     #messages.error(request, 'An error occurred while sharing the purchase report via email.')
     return redirect('stock_report')
+
+def save_party3(request):
+    if request.user.is_company:
+        cmp = request.user.company
+    else:
+        cmp = request.user.employee.company  
+    usr = CustomUser.objects.get(username=request.user)
+
+    if request.method == 'POST':
+        partyname = request.POST.get('partyname')
+        trn_no = request.POST.get('trn_no')
+        contact = request.POST.get('contact')
+        placeof=request.POST.get('pol')
+        trn_type = request.POST.get('trn_type')
+        address = request.POST.get('address')
+        email = request.POST.get('email')
+        balance = request.POST.get('balance')
+        paymentType = request.POST.get('paymentType')
+        currentdate = request.POST.get('currentdate')
+        additionalfield1 = request.POST.get('additionalfield1')
+        additionalfield2 = request.POST.get('additionalfield2')
+        additionalfield3 = request.POST.get('additionalfield3')
+        # print(trn_no)
+        # print(partyname)
+
+        # Check if the contact number already exists in the database
+        if Party.objects.filter(contact=contact,company=cmp).exists():
+            # Send a message indicating that the contact number already exists
+
+            return redirect('createdebitnote')
+
+        # Check if the transaction number already exists in the database
+        if trn_type == "Unregistered/Consumers":
+            Party.objects.create(    user=usr,
+            company=cmp,
+            party_name=partyname,
+            trn_no=trn_no,
+            contact=contact,
+            trn_type=trn_type,
+            address=address,
+            email=email,
+            state=placeof,
+            openingbalance=balance,
+            payment=paymentType,
+            current_date=currentdate,
+            additionalfield1=additionalfield1,
+            additionalfield2=additionalfield2,
+            additionalfield3=additionalfield3)
+            # Optionally, you can send a success message here
+
+            return redirect('createdebitnote')
+        else:
+             if Party.objects.filter(trn_no=trn_no, company=cmp).exists():
+                # Send a message indicating that the transaction number already exists
+
+                return redirect('createdebitnote')
+        Party.objects.create(
+            user=usr,
+            company=cmp,
+            party_name=partyname,
+            trn_no=trn_no,
+            contact=contact,
+            trn_type=trn_type,
+            address=address,
+            email=email,
+            state=placeof,
+            openingbalance=balance,
+            payment=paymentType,
+            current_date=currentdate,
+            additionalfield1=additionalfield1,
+            additionalfield2=additionalfield2,
+            additionalfield3=additionalfield3
+        )
+        return redirect('createdebitnote')
+def custdata1(request):
+  if request.user.is_company:
+    cmp = request.user.company
+  else:
+    cmp = request.user.employee.company
+  cid = request.POST['id']
+  part = Party.objects.get(id=cid)
+  bills = PurchaseBill.objects.filter(party_id=cid,company=cmp)
+
+  return JsonResponse({'bills':bills})
